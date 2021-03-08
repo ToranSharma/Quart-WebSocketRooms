@@ -139,7 +139,7 @@ class WebSocketRooms(Quart):
         return func
 
     def allocate_room(self):
-        room = Room(list(rooms.keys()), self.code_length)
+        room = Room(list(self.rooms.keys()), self.code_length)
         self.rooms[room.code] = room
         return room
         
@@ -152,7 +152,7 @@ class WebSocketRooms(Quart):
 
             room.add_user(user)
             
-            print("There " + ("are" if len(rooms) != 1 else "is") + " now {0} room".format(len(rooms)) + ("s" if len(rooms) != 1 else ""), flush=True)
+            print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
             return {"type": "room_created", "room_code": room.code}
 
     def join_room(self, code, user, username) -> dict:
@@ -160,7 +160,7 @@ class WebSocketRooms(Quart):
             user.username = username
             response = {"type": "join_room"}
             fail_reason = ""
-            if code in rooms:
+            if code in self.rooms:
                 if (room.add_user(user)):
                     response["success"] = True
                     pass
@@ -177,29 +177,29 @@ class WebSocketRooms(Quart):
         if message["type"] == "load_room":
             room = self.allocate_room(save_data)
             
-            print("There " + ("are" if len(rooms) != 1 else "is") + " now {0} room".format(len(rooms)) + ("s" if len(rooms) != 1 else ""), flush=True)
+            print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.self.rooms) != 1 else ""), flush=True)
             return {"type": "load_room", "room_code": room.code}
 
     async def close_room(self, user, message):
         if (
             message["type"] == "close_room"
             and user.host
-            and user.room in rooms
+            and user.room in self.rooms
         ):
 
             await user.room.broadcast(code, {"type": "room_closed", "room_code": code})
-            del rooms[code]
+            del self.rooms[code]
     
     async def remove_from_room(self, user, message):
         if (
             message["type"] == "remove_from_room"
-            and user.room in rooms
+            and user.room in self.rooms
         ):
             delete_room = user.room.remove_user(user)
 
             if delete_room:
-                print("There " + ("are" if len(rooms) != 1 else "is") + " now {0} room".format(len(rooms)) + ("s" if len(rooms) != 1 else ""), flush=True)
-                del rooms[user.room.code]
+                print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
+                del self.rooms[user.room.code]
 
     def save_room(self, user, message) -> dict:
         if message["type"] == "save_room":
