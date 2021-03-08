@@ -129,8 +129,7 @@ class WebSocketRooms(Quart):
                 responses += step_responses
 
             for response in responses:
-                if response is not None:
-                    await user.queue.put(response)
+                await user.queue.put(response)
         
     def incoming_processing_step(self, func):
         self.custom_incoming_steps.append(func)
@@ -162,10 +161,12 @@ class WebSocketRooms(Quart):
     async def join_room(self, user, message) -> List[dict]:
         step_responses = []
         if message["type"] == "join_room":
-            user.username = username
+            user.username = message["username"]
+            code = message["code"]
             response = {"type": "join_room"}
             fail_reason = ""
             if code in self.rooms:
+                room = self.rooms[code]
                 if (room.add_user(user)):
                     response["success"] = True
                     pass
@@ -196,7 +197,7 @@ class WebSocketRooms(Quart):
             and user.room in self.rooms
         ):
 
-            await user.room.broadcast(code, {"type": "room_closed", "room_code": code})
+            await user.room.broadcast({"type": "room_closed", "room_code": code})
             del self.rooms[code]
         return step_responses
     
