@@ -50,10 +50,11 @@ class Room():
 
     async def remove_user(self, user) -> bool:
         del self.users[user.username]
-        await self.remove_host(user)
-        user.room = None
+        if len(self.users) != 0:
+            await self.remove_host(user)
+            user.room = None
 
-        await self.broadcast({"type": "removed_from_room", "username": user.username})
+            await self.broadcast({"type": "removed_from_room", "username": user.username})
         return len(self.hosts) == 0
 
     async def make_host(self, user = None) -> None:
@@ -65,15 +66,15 @@ class Room():
                 else:
                     user = self.users[username]
                     break
-        if user.username in self.hosts:
-            user.host = True
-            self.hosts.append(user)
-            await self.broadcast({"type": "hosts_update", "added": user.username})
+
+        user.host = True
+        self.hosts.append(user)
+        await self.broadcast({"type": "hosts_update", "added": user.username})
 
     async def remove_host(self, user) -> None:
         if user.username in self.hosts:
             if len(self.hosts) == 1:
-                self.make_host()
+                await self.make_host()
             del self.hosts[user.username]
             user.host = False
             await self.broadcast({"type": "hosts_update", "removed": user.username})
