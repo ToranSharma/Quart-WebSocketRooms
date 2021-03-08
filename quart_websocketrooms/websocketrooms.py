@@ -99,7 +99,7 @@ class WebSocketRooms(Quart):
             print("User was in room " + user.room.code, flush=True)
             code = user.room.code
             if (await user.room.remove_user(user)):
-                del rooms[user.room]
+                del self.rooms[user.room]
                 print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
 
     async def send_messages(self, user):

@@ -44,7 +44,7 @@ class Room():
             user.room = self
             if user.host:
                 self.hosts[user.username] = user
-            await self.broadcast({"type": "users_update", "users": list(self.users.keys())})
+            await self.send_users_update()
             return True
         else:
             return False
@@ -54,6 +54,7 @@ class Room():
         user.room = None
         await self.remove_host(user)
         await self.broadcast({"type": "removed_from_room", "username": user.username})
+        await self.send_users_update()
 
         return len(self.users) == 0
 
@@ -66,7 +67,7 @@ class Room():
                     break
 
         user.host = True
-        self.hosts[user.username]= user
+        self.hosts[user.username] = user
         await self.broadcast({"type": "hosts_update", "added": user.username})
 
     async def remove_host(self, user) -> None:
@@ -77,4 +78,5 @@ class Room():
             user.host = False
             await self.broadcast({"type": "hosts_update", "removed": user.username})
 
-
+    async def send_users_update(self) -> None:
+        await self.broadcast({"type": "users_update", "users": list(self.users.keys())})
