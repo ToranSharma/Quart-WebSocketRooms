@@ -130,12 +130,12 @@ class WebSocketRooms(Quart):
                 if response is not None:
                     await user.queue.put(response)
         
-    async def incoming_processing_step(self):
+    def incoming_processing_step(self):
         def decorator(func: Callable) -> Callable:
             self.custom_incoming_steps.append(func)
             return func
     
-    async def outgoing_processing_step(self):
+    def outgoing_processing_step(self):
         def decorator(func: Callable) -> Callable:
             self.custom_outgoing_steps.append(func)
             return func
