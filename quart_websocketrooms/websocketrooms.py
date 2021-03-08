@@ -77,10 +77,10 @@ class WebSocketRooms(Quart):
             rule,
             endpoint,
             view_func,
-            defaults,
-            host,
-            subdomain,
-            strict_slashes,
+            defaults=defaults,
+            host=host,
+            subdomain=subdomain,
+            strict_slashes=strict_slashes,
         )
     async def ws_view():
         user = self.User()
