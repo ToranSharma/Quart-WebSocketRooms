@@ -8,7 +8,7 @@ from quart_websocketrooms import WebSocketRooms
 
 app = WebSocketRooms(__name__)
 
-@app.incoming_processing_step()
+@app.incoming_processing_step
 async def chat_message(user, message):
     step_responses = []
     if message["type"] == "chat_message"
