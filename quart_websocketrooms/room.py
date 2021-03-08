@@ -8,7 +8,7 @@ class Room():
     loaded = False
 
     def __init__(self, existing_codes: Optional[List[str]] = [], code_length: Optional[int] = 8) -> None:
-        self.code = self.generateCode(existing_codes, code_length)
+        self.code = self.generate_code(existing_codes, code_length)
     
     def load_from_save(self, save_data: dict) -> None:
         self.loaded = True
