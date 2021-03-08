@@ -147,7 +147,7 @@ class WebSocketRooms(Quart):
         if message["type"] == "create_room":
             user.username = message["username"]
             user.host = True
-            room = allocate_room()
+            room = self.allocate_room()
             room.loaded = False
 
             room.add_user(user)
