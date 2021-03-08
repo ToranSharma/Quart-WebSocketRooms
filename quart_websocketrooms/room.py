@@ -2,6 +2,10 @@ from typing import (
     Optional,
     List
 )
+import random
+import string
+
+
 class Room():
     users = {}
     hosts = {}
@@ -73,4 +77,5 @@ class Room():
             del self.hosts[user.username]
             user.host = False
             await self.broadcast({"type": "hosts_update", "removed": user.username})
+
 
