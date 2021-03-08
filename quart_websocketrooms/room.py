@@ -44,7 +44,6 @@ class Room():
             user.room = self
             if user.host:
                 self.hosts[user.username] = user
-            await self.send_users_update()
             return True
         else:
             return False

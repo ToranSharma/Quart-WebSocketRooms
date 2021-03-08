@@ -166,23 +166,25 @@ class WebSocketRooms(Quart):
         if message["type"] == "join_room":
             user.username = message["username"]
             code = message["code"]
-            response = {"type": "join_room"}
+            join_response = {"type": "join_room"}
             fail_reason = ""
             if code in self.rooms:
                 room = self.rooms[code]
                 if (await room.add_user(user)):
-                    response["success"] = True
+                    join_response["success"] = True
                     pass
                 else:
-                    response["success"] = False
-                    response["fail_reason"] = "username taken"
+                    join_response["success"] = False
+                    join_response["fail_reason"] = "username taken"
             else:
-                response["success"] = False
-                response["fail_reason"] = "invalid code"
+                join_response["success"] = False
+                join_response["fail_reason"] = "invalid code"
 
-            step_responses.append(response);
-            if response["success"]:
-                step_responses.append({"type": "users_update", "users": list(user.room.users.keys())})
+            if join_response["success"]:
+                await user.queue.put(join_response)
+                await user.room.send_users_update()
+            else:
+                step_repsones.append(join_response)
         return step_responses
 
     async def load_room(self, user, message) -> List[dict]:
