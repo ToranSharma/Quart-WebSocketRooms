@@ -85,7 +85,7 @@ class WebSocketRooms(Quart):
     async def ws_view(self):
         user = self.User()
 
-        send = asyncio.create_task(self.send_messagess(user))
+        send = asyncio.create_task(self.send_messages(user))
         recieve = asyncio.create_task(self.recieve_messages(websocket, user))
         try:
             await asyncio.gather(send, recieve)
