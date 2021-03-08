@@ -1,7 +1,7 @@
 from quart import Quart, websocket
 import json
 import asyncio
-from typing import Optional, Callable
+from typing import Optional, Callable, List
 
 from .room import Room
 from .user import User
