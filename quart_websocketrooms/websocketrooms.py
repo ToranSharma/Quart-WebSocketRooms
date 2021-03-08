@@ -94,7 +94,7 @@ class WebSocketRooms(Quart):
 
 
     async def cancelled(self, user):
-        print("Connection dropped")
+        print("Connection dropped", flush=True)
         if user.room is not None:
             print("User was in room " + user.room.code, flush=True)
             await user.room.remove_user(user)
@@ -152,7 +152,7 @@ class WebSocketRooms(Quart):
             room = self.allocate_room()
             room.loaded = False
 
-            room.add_user(user)
+            await room.add_user(user)
             
             print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
             step_responses.append({"type": "create_room", "room_code": room.code})
@@ -167,7 +167,7 @@ class WebSocketRooms(Quart):
             fail_reason = ""
             if code in self.rooms:
                 room = self.rooms[code]
-                if (room.add_user(user)):
+                if (await room.add_user(user)):
                     response["success"] = True
                     pass
                 else:

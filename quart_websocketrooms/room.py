@@ -38,7 +38,7 @@ class Room():
 
         return code
     
-    def add_user(self, user) -> bool:
+    async def add_user(self, user) -> bool:
         if user.username not in self.users:
             self.users[user.username] = user
             user.room = self
