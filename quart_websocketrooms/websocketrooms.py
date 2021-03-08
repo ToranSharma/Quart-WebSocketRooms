@@ -61,7 +61,7 @@ class WebSocketRooms(Quart):
                 self.change_host,
         ]
 
-    def bind_to_route(
+    def websocket_rooms_route(
             self,
             rule: str,
             endpoint: Optional[str] = None,

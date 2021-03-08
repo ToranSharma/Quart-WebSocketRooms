@@ -16,6 +16,6 @@ async def chat_message(user, message):
 
     return step_responses
 
-app.bind_to_route("/ws")
+app.websocket_rooms_route("/ws")
 
 ```
