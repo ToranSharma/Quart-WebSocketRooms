@@ -178,6 +178,8 @@ class WebSocketRooms(Quart):
                 response["fail_reason"] = "invalid code"
 
             step_responses.append(response);
+            if response["success"]:
+                step_responses.append({"type": "users_update", "users": list(user.room.users.keys())})
         return step_responses
 
     async def load_room(self, user, message) -> List[dict]:

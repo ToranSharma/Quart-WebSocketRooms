@@ -44,6 +44,7 @@ class Room():
             user.room = self
             if user.host:
                 self.hosts[user.username] = user
+            await self.broadcast({"type": "users_update", "users": list(self.users.keys())})
             return True
         else:
             return False
