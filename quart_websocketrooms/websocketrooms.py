@@ -97,7 +97,10 @@ class WebSocketRooms(Quart):
         print("Connection dropped", flush=True)
         if user.room is not None:
             print("User was in room " + user.room.code, flush=True)
-            await user.room.remove_user(user)
+            code = user.room.code
+            if (await user.room.remove_user(user)):
+                del rooms[user.room]
+                print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
 
     async def send_messages(self, user):
         while True:
@@ -209,11 +212,12 @@ class WebSocketRooms(Quart):
             message["type"] == "remove_from_room"
             and user.room in self.rooms
         ):
+            code = user.code
             delete_room = user.room.remove_user(user)
 
             if delete_room:
                 print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
-                del self.rooms[user.room.code]
+                del self.rooms[code]
         return step_responses
 
     async def save_room(self, user, message) -> List[dict]:
