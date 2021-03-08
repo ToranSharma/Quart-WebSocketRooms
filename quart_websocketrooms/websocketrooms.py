@@ -58,6 +58,7 @@ class WebSocketRooms(Quart):
                 self.remove_host,
                 self.change_host,
         ]
+        self.default_outgoing_steps = []
 
     def websocket_rooms_route(
             self,
@@ -121,8 +122,8 @@ class WebSocketRooms(Quart):
 
             # Custom Processing
             for process in self.custom_incoming_steps:
-                steo_responses = await process(user, message)
-                responses += step_response
+                step_responses = await process(user, message)
+                responses += step_responses
 
             for response in responses:
                 if response is not None:
@@ -209,7 +210,7 @@ class WebSocketRooms(Quart):
                 del self.rooms[user.room.code]
         return step_responses
 
-    def save_room(self, user, message) -> List[dict]:
+    async def save_room(self, user, message) -> List[dict]:
         step_responses = []
         if message["type"] == "save_room":
             step_responses({"type": "save_room", "save_data": user.room.save_room()})
