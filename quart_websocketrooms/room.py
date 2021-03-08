@@ -12,7 +12,7 @@ class Room():
     loaded = False
 
     def __init__(self, existing_codes: Optional[List[str]] = [], code_length: Optional[int] = 8) -> None:
-        self.code = self.generate_code(existing_codes, code_length)
+        self.code = self.generate_code(existing_codes, code_length if code_length is not None else 8)
     
     def load_from_save(self, save_data: dict) -> None:
         self.loaded = True
@@ -34,7 +34,7 @@ class Room():
     def generate_code(self, existing_codes: List[str], code_length: int) -> str:
         code = "".join(random.choices(string.ascii_letters + string.digits, k=code_length))
         while code in existing_codes:
-            code = "".join(random.choices(string.ascii_letters + string.digits, k=8))
+            code = "".join(random.choices(string.ascii_letters + string.digits, k=code_length))
 
         return code
     
