@@ -65,12 +65,14 @@ class WebSocketRooms(Quart):
             self,
             rule: str,
             endpoint: Optional[str] = None,
-            view_func: Optional[Callable] = self.ws_view,
+            view_func: Optional[Callable] = None,
             defaults: Optional[dict] = None,
             host: Optional[str] = None,
             subdomain: Optional[str] = None,
             strict_slashes: Optional[bool] = None,
         ):
+        if view_func is None:
+            view_func = self.ws_view
         super().add_websocket(
             rule,
             endpoint,
