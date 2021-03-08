@@ -155,7 +155,7 @@ class WebSocketRooms(Quart):
             step_responses.append({"type": "room_created", "room_code": room.code})
         return step_responses
 
-    async def join_room(self, code, user, username) -> List[dict]:
+    async def join_room(self, user, message) -> List[dict]:
         step_responses = []
         if message["type"] == "join_room":
             user.username = username
@@ -175,7 +175,7 @@ class WebSocketRooms(Quart):
             step_responses.append(response);
         return step_responses
 
-    async def load_room(self, user, username, save_data) -> List[dict]:
+    async def load_room(self, user, message) -> List[dict]:
         step_responses = []
         if message["type"] == "load_room":
             room = self.allocate_room(save_data)
