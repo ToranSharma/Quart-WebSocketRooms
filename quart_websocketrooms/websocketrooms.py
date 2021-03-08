@@ -93,7 +93,9 @@ class WebSocketRooms(Quart):
 
 
     async def cancelled(self, user):
+        print("Connection dropped")
         if user.room is not None:
+            print("User was in room " + user.room.code, flush=True)
             await user.room.remove_user(user)
 
     async def send_messages(self, user):
@@ -153,7 +155,7 @@ class WebSocketRooms(Quart):
             room.add_user(user)
             
             print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
-            step_responses.append({"type": "room_created", "room_code": room.code})
+            step_responses.append({"type": "create_room", "room_code": room.code})
         return step_responses
 
     async def join_room(self, user, message) -> List[dict]:
