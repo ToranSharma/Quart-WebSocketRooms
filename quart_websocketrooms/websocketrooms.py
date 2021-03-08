@@ -90,6 +90,7 @@ class WebSocketRooms(Quart):
             await asyncio.gather(send, recieve)
         except asyncio.CancelledError:
             await self.cancelled(user)
+            raise
 
 
     async def cancelled(self, user):
