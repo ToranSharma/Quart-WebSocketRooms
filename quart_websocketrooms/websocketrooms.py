@@ -141,7 +141,8 @@ class WebSocketRooms(Quart):
         self.rooms[room.code] = room
         return room
         
-    def create_room(self, user, message) -> dict:
+    async def create_room(self, user, message) -> List[dict]:
+        step_responses = []
         if message["type"] == "create_room":
             user.username = message["username"]
             user.host = True
@@ -151,9 +152,11 @@ class WebSocketRooms(Quart):
             room.add_user(user)
             
             print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
-            return {"type": "room_created", "room_code": room.code}
+            step_responses.append({"type": "room_created", "room_code": room.code})
+        return step_responses
 
-    def join_room(self, code, user, username) -> dict:
+    async def join_room(self, code, user, username) -> List[dict]:
+        step_responses = []
         if message["type"] == "join_room":
             user.username = username
             response = {"type": "join_room"}
@@ -169,16 +172,20 @@ class WebSocketRooms(Quart):
                 response["success"] = False
                 response["fail_reason"] = "invalid code"
 
-            return response;
+            step_responses.append(response);
+        return step_responses
 
-    def load_room(self, user, username, save_data) -> dict:
+    async def load_room(self, user, username, save_data) -> List[dict]:
+        step_responses = []
         if message["type"] == "load_room":
             room = self.allocate_room(save_data)
             
             print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.self.rooms) != 1 else ""), flush=True)
-            return {"type": "load_room", "room_code": room.code}
+            step_responses.append({"type": "load_room", "room_code": room.code})
+        return step_responses
 
-    async def close_room(self, user, message):
+    async def close_room(self, user, message) -> List:
+        step_responses = []
         if (
             message["type"] == "close_room"
             and user.host
@@ -187,8 +194,10 @@ class WebSocketRooms(Quart):
 
             await user.room.broadcast(code, {"type": "room_closed", "room_code": code})
             del self.rooms[code]
+        return step_responses
     
-    async def remove_from_room(self, user, message):
+    async def remove_from_room(self, user, message) -> List[dict]:
+        step_responses = []
         if (
             message["type"] == "remove_from_room"
             and user.room in self.rooms
@@ -198,25 +207,34 @@ class WebSocketRooms(Quart):
             if delete_room:
                 print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
                 del self.rooms[user.room.code]
+        return step_responses
 
-    def save_room(self, user, message) -> dict:
+    def save_room(self, user, message) -> List[dict]:
+        step_responses = []
         if message["type"] == "save_room":
-            return {"type": "save_room", "save_data": user.room.save_room()}
+            step_responses({"type": "save_room", "save_data": user.room.save_room()})
+        return step_responses
 
-    async def make_host(self, user, message) -> None:
+    async def make_host(self, user, message) -> List:
+        step_responses = []
         if message["type"] == "make_host" and user.host:
             user_to_promote = user.room.users[message["username"]]
             await user.room.make_host(user_to_promote)
+        return step_responses
 
-    async def remove_host(self, user, message) -> None:
+    async def remove_host(self, user, message) -> List:
+        step_responses = []
         if message["type"] == "remove_host" and user.host:
             await user.room.remove_host(user)
+        return step_responses
 
-    async def change_host(self, user, message) -> None:
+    async def change_host(self, user, message) -> List:
+        step_responses = []
         if message["type"] == "change_host" and user.host:
             user_to_promote = user.room.users[message["username"]]
             if not user_to_promote.host:
                 await user.room.make_host(user_to_promote)
                 await user.room.remove_host(user)
+        return step_responses
 
 
