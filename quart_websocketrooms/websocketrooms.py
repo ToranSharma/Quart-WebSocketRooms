@@ -112,7 +112,6 @@ class WebSocketRooms(Quart):
     async def recieve_messages(self, websocket, user):
         while True:
             raw_data = await websocket.receive()
-            message_type = message["type"]
             message = json.loads(raw_data)
             responses = []
 
