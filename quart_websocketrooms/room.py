@@ -50,30 +50,27 @@ class Room():
 
     async def remove_user(self, user) -> bool:
         del self.users[user.username]
-        if len(self.users) != 0:
-            await self.remove_host(user)
-            user.room = None
+        user.room = None
+        await self.remove_host(user)
+        await self.broadcast({"type": "removed_from_room", "username": user.username})
 
-            await self.broadcast({"type": "removed_from_room", "username": user.username})
-        return len(self.hosts) == 0
+        return len(self.users) == 0
 
     async def make_host(self, user = None) -> None:
         # if no user specified, find first non host to promote
         if user is None:
             for username in self.users:
-                if username in self.hosts:
-                    continue
-                else:
+                if username not in self.hosts:
                     user = self.users[username]
                     break
 
         user.host = True
-        self.hosts.append(user)
+        self.hosts[user.username]= user
         await self.broadcast({"type": "hosts_update", "added": user.username})
 
     async def remove_host(self, user) -> None:
         if user.username in self.hosts:
-            if len(self.hosts) == 1:
+            if len(self.hosts) == 1 and len(self.users) != 0:
                 await self.make_host()
             del self.hosts[user.username]
             user.host = False
