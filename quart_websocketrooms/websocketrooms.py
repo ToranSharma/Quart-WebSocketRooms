@@ -82,7 +82,7 @@ class WebSocketRooms(Quart):
             subdomain=subdomain,
             strict_slashes=strict_slashes,
         )
-    async def ws_view():
+    async def ws_view(self):
         user = self.User()
 
         send = asyncio.create_task(self.send_messagess(user))
