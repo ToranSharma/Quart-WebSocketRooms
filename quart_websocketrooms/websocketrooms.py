@@ -130,15 +130,13 @@ class WebSocketRooms(Quart):
                 if response is not None:
                     await user.queue.put(response)
         
-    def incoming_processing_step(self):
-        def decorator(func: Callable) -> Callable:
-            self.custom_incoming_steps.append(func)
-            return func
+    def incoming_processing_step(self, func):
+        self.custom_incoming_steps.append(func)
+        return func
     
-    def outgoing_processing_step(self):
-        def decorator(func: Callable) -> Callable:
-            self.custom_outgoing_steps.append(func)
-            return func
+    def outgoing_processing_step(self, func):
+        self.custom_outgoing_steps.append(func)
+        return func
 
     def allocate_room(self):
         room = Room(list(rooms.keys()), self.code_length)
