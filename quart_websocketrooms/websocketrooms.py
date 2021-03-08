@@ -101,10 +101,10 @@ class WebSocketRooms(Quart):
             message = await user.queue.get()
             
             for process in self.default_outgoing_steps:
-                process(message, user)
+                await process(message, user)
             
             for process in self.custom_outgoing_steps:
-                process(message, user)
+                await process(message, user)
 
             await websocket.send(json.dumps(message))
 
