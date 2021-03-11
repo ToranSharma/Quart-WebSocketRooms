@@ -67,7 +67,7 @@ class Room():
 
         user.host = True
         self.hosts[user.username] = user
-        await self.broadcast({"type": "hosts_update", "added": user.username})
+        await self.send_hosts_update(added=user)
 
     async def remove_host(self, user) -> None:
         if user.username in self.hosts:
@@ -75,7 +75,14 @@ class Room():
                 await self.make_host()
             del self.hosts[user.username]
             user.host = False
-            await self.broadcast({"type": "hosts_update", "removed": user.username})
+            await self.send_hosts_update(removed=user)
 
     async def send_users_update(self) -> None:
         await self.broadcast({"type": "users_update", "users": list(self.users.keys())})
+
+    async def send_hosts_update(self, added_userser=None, removed_user=None):
+        if added_user is not None:
+            await added_user.queue.put({"type": "host_promotion"})
+            await self.broadcast({"type": "hosts_update", "added" = added_user.username})
+        else:
+            await self.broadcast({"type": "hosts_update", "removed" = removed_user.username})
