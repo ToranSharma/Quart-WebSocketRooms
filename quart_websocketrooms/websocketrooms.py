@@ -107,10 +107,10 @@ class WebSocketRooms(Quart):
             message = await user.queue.get()
             
             for process in self.default_outgoing_steps:
-                await process(message, user)
+                await process(user, message)
             
             for process in self.custom_outgoing_steps:
-                await process(message, user)
+                await process(user, message)
 
             await websocket.send(json.dumps(message))
 
@@ -143,7 +143,7 @@ class WebSocketRooms(Quart):
         return func
 
     def allocate_room(self):
-        room = Room(list(self.rooms.keys()), self.code_length)
+        room = self.Room(list(self.rooms), self.code_length)
         self.rooms[room.code] = room
         return room
         
