@@ -93,7 +93,6 @@ class WebSocketRooms(Quart):
             await self.cancelled(user)
             raise
 
-
     async def cancelled(self, user):
         print("Connection dropped", flush=True)
         if user.room is not None:
@@ -119,21 +118,14 @@ class WebSocketRooms(Quart):
         while True:
             raw_data = await websocket.receive()
             message = json.loads(raw_data)
-            responses = []
 
             # Built in handling
             for process in self.default_incoming_steps:
-                step_responses = await process(user, message)
-                responses += step_responses
-
+                await process(user, message)
 
             # Custom Processing
             for process in self.custom_incoming_steps:
-                step_responses = await process(user, message)
-                responses += step_responses
-
-            for response in responses:
-                await user.queue.put(response)
+                await process(user, message)
         
     def incoming_processing_step(self, func):
         self.custom_incoming_steps.append(func)
@@ -148,8 +140,7 @@ class WebSocketRooms(Quart):
         self.rooms[room.code] = room
         return room
         
-    async def create_room(self, user, message) -> List[dict]:
-        step_responses = []
+    async def create_room(self, user, message) -> None:
         if message["type"] == "create_room":
             user.username = message["username"]
             user.host = True
@@ -161,10 +152,8 @@ class WebSocketRooms(Quart):
             print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
             await user.queue.put({"type": "create_room", "room_code": room.code})
             await user.room.send_users_update()
-        return step_responses
 
-    async def join_room(self, user, message) -> List[dict]:
-        step_responses = []
+    async def join_room(self, user, message) -> None:
         if message["type"] == "join_room":
             user.username = message["username"]
             code = message["code"]
@@ -182,24 +171,25 @@ class WebSocketRooms(Quart):
                 join_response["success"] = False
                 join_response["fail_reason"] = "invalid code"
 
-            if join_response["success"]:
                 await user.queue.put(join_response)
+            if join_response["success"]:
                 await user.room.send_users_update()
-            else:
-                step_repsones.append(join_response)
-        return step_responses
 
-    async def load_room(self, user, message) -> List[dict]:
-        step_responses = []
+    async def load_room(self, user, message) -> None:
         if message["type"] == "load_room":
-            room = self.allocate_room(save_data)
+            user.username = message["username"]
+            user.host = True
+            room = self.allocate_room()
+            room.add_user(user)
+            save_data = message["save_data"]
+            print("save_data: {}".format(save_data), flush=True)
+            room.load_from_save(save_data)
             
-            print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.self.rooms) != 1 else ""), flush=True)
-            step_responses.append({"type": "load_room", "room_code": room.code})
-        return step_responses
+            print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
+            await user.queue.put({"type": "load_room", "room_code": room.code})
+            await user.room.send_users_update()
 
-    async def close_room(self, user, message) -> List:
-        step_responses = []
+    async def close_room(self, user, message) -> None:
         if (
             message["type"] == "close_room"
             and user.host
@@ -210,10 +200,8 @@ class WebSocketRooms(Quart):
             await user.room.broadcast({"type": "room_closed"})
             del self.rooms[code]
             print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
-        return step_responses
     
-    async def remove_from_room(self, user, message) -> List[dict]:
-        step_responses = []
+    async def remove_from_room(self, user, message) -> None:
         if (
             (
                 message["type"] == "remove_from_room"
@@ -225,40 +213,29 @@ class WebSocketRooms(Quart):
             code = user.room.code
             delete_room = await user.room.remove_user(user)
             if message["type"] == "leave_room":
-                step_responses.append({"type": "removed_from_room", "username": user.username})
+                user.queue.put({"type": "removed_from_room", "username": user.username})
 
             if delete_room:
                 del self.rooms[code]
                 print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
-            
-        return step_responses
 
-    async def save_room(self, user, message) -> List[dict]:
-        step_responses = []
+    async def save_room(self, user, message) -> None:
         if message["type"] == "save_room":
-            step_responses({"type": "save_room", "save_data": user.room.save_room()})
-        return step_responses
+            user.queue.put({"type": "save_room", "save_data": user.room.save_room()})
 
-    async def make_host(self, user, message) -> List:
-        step_responses = []
+    async def make_host(self, user, message) -> None:
         if message["type"] == "make_host" and user.host:
             user_to_promote = user.room.users[message["username"]]
             await user.room.make_host(user_to_promote)
-        return step_responses
 
-    async def remove_host(self, user, message) -> List:
-        step_responses = []
+    async def remove_host(self, user, message) -> None:
         if message["type"] == "remove_host" and user.host:
             await user.room.remove_host(user)
-        return step_responses
 
-    async def change_host(self, user, message) -> List:
-        step_responses = []
+    async def change_host(self, user, message) -> None:
         if message["type"] == "change_host" and user.host:
             user_to_promote = user.room.users[message["username"]]
             if not user_to_promote.host:
                 await user.room.make_host(user_to_promote)
                 await user.room.remove_host(user)
-        return step_responses
-
 
