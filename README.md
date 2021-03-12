@@ -10,11 +10,8 @@ app = WebSocketRooms(__name__)
 
 @app.incoming_processing_step
 async def chat_message(user, message):
-    step_responses = []
-    if message["type"] == "chat_message"
+    if message["type"] == "chat_message":
         await user.room.broadcast(message)
-
-    return step_responses
 
 app.websocket_rooms_route("/ws")
 
