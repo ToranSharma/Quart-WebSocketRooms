@@ -9,10 +9,6 @@ from .user import User
 
 class WebSocketRooms(Quart):
     """The room based websocket app"""
-    rooms = dict()
-    custom_incoming_steps = []
-    custom_outgoing_steps = []
-
     def __init__(
         self,
         import_name: str,
@@ -32,6 +28,10 @@ class WebSocketRooms(Quart):
         CustomUserClass: Optional[type] = User,
         code_length: Optional[int] = None,
     ) -> None:
+        self.rooms = dict()
+        self.custom_incoming_steps = []
+        self.custom_outgoing_steps = []
+
         super().__init__(
             import_name,
             static_url_path,
@@ -44,6 +44,7 @@ class WebSocketRooms(Quart):
             instance_path,
             instance_relative_config
         )
+
         self.Room = CustomRoomClass
         self.User = CustomUserClass
         self.code_length = code_length
@@ -98,7 +99,7 @@ class WebSocketRooms(Quart):
         if user.room is not None:
             print("User was in room " + user.room.code, flush=True)
             code = user.room.code
-            if (await user.room.remove_user(user)):
+            if await user.room.remove_user(user):
                 del self.rooms[code]
                 print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
 
@@ -155,10 +156,11 @@ class WebSocketRooms(Quart):
             room = self.allocate_room()
             room.loaded = False
 
-            await room.add_user(user)
+            room.add_user(user)
             
             print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
-            step_responses.append({"type": "create_room", "room_code": room.code})
+            await user.queue.put({"type": "create_room", "room_code": room.code})
+            await user.room.send_users_update()
         return step_responses
 
     async def join_room(self, user, message) -> List[dict]:
@@ -170,7 +172,7 @@ class WebSocketRooms(Quart):
             fail_reason = ""
             if code in self.rooms:
                 room = self.rooms[code]
-                if (await room.add_user(user)):
+                if room.add_user(user):
                     join_response["success"] = True
                     pass
                 else:
@@ -201,25 +203,34 @@ class WebSocketRooms(Quart):
         if (
             message["type"] == "close_room"
             and user.host
-            and user.room in self.rooms
+            and user.room.code in self.rooms
         ):
+            code = user.room.code
 
-            await user.room.broadcast({"type": "room_closed", "room_code": code})
+            await user.room.broadcast({"type": "room_closed"})
             del self.rooms[code]
+            print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
         return step_responses
     
     async def remove_from_room(self, user, message) -> List[dict]:
         step_responses = []
         if (
-            message["type"] == "remove_from_room"
-            and user.room in self.rooms
+            (
+                message["type"] == "remove_from_room"
+                or message["type"] == "leave_room"
+            )
+            and user.room.code in self.rooms
         ):
-            code = user.code
-            delete_room = user.room.remove_user(user)
+            print("remove_from_room called, user:{0}, message:{1}".format(vars(user), message), flush = True)
+            code = user.room.code
+            delete_room = await user.room.remove_user(user)
+            if message["type"] == "leave_room":
+                step_responses.append({"type": "removed_from_room", "username": user.username})
 
             if delete_room:
-                print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
                 del self.rooms[code]
+                print("There " + ("are" if len(self.rooms) != 1 else "is") + " now {0} room".format(len(self.rooms)) + ("s" if len(self.rooms) != 1 else ""), flush=True)
+            
         return step_responses
 
     async def save_room(self, user, message) -> List[dict]:

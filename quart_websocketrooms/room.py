@@ -7,20 +7,20 @@ import string
 
 
 class Room():
-    users = {}
-    hosts = {}
-    loaded = False
-
     def __init__(self, existing_codes: Optional[List[str]] = [], code_length: Optional[int] = 8) -> None:
         self.code = self.generate_code(existing_codes, code_length if code_length is not None else 8)
+        self.users = {}
+        self.hosts = {}
+        self.loaded = False
     
     def load_from_save(self, save_data: dict) -> None:
         self.loaded = True
         for key in save_data:
             setattr(self, key, save_data[key])
+        print(vars(self))
     
     def save_room(self) -> dict:
-        save_data = {"users": users, "hosts": hosts}
+        save_data = {"users": self.users, "hosts": hosts}
         return save_data
     
     async def broadcast(self, message: dict) -> None:
@@ -38,7 +38,7 @@ class Room():
 
         return code
     
-    async def add_user(self, user) -> bool:
+    def add_user(self, user) -> bool:
         if user.username not in self.users:
             self.users[user.username] = user
             user.room = self
