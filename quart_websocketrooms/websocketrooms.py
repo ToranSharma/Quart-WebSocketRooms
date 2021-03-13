@@ -171,7 +171,7 @@ class WebSocketRooms(Quart):
                 join_response["success"] = False
                 join_response["fail_reason"] = "invalid code"
 
-                await user.queue.put(join_response)
+            await user.queue.put(join_response)
             if join_response["success"]:
                 await user.room.send_users_update()
 
