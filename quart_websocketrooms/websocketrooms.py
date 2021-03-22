@@ -204,16 +204,16 @@ class WebSocketRooms(Quart):
     async def remove_from_room(self, user, message) -> None:
         if (
             (
-                message["type"] == "remove_from_room"
-                or message["type"] == "leave_room"
+                message["type"] == "leave_room"
+                or (message["type"] == "remove_from_room" and message["username"] in user.room.users)
             )
             and user.room.code in self.rooms
         ):
-            print("remove_from_room called, user:{0}, message:{1}".format(vars(user), message), flush = True)
             code = user.room.code
-            delete_room = await user.room.remove_user(user)
-            if message["type"] == "leave_room":
-                user.queue.put({"type": "removed_from_room", "username": user.username})
+
+            user_to_remove = user.room.users[message["username"] if message["type"] == "remove_from_room" else user.username]
+            delete_room = await user.room.remove_user(user_to_remove)
+            await user_to_remove.queue.put({"type": "removed_from_room", "username": user_to_remove.username})
 
             if delete_room:
                 del self.rooms[code]
@@ -221,7 +221,7 @@ class WebSocketRooms(Quart):
 
     async def save_room(self, user, message) -> None:
         if message["type"] == "save_room":
-            user.queue.put({"type": "save_room", "save_data": user.room.save_room()})
+            await user.queue.put({"type": "save_room", "save_data": user.room.save_room()})
 
     async def make_host(self, user, message) -> None:
         if message["type"] == "make_host" and user.host:
