@@ -15,12 +15,14 @@ class Room():
     
     def load_from_save(self, save_data: dict) -> None:
         self.loaded = True
+        self.save_data = save_data
         for key in save_data:
-            setattr(self, key, save_data[key])
-        print(vars(self))
+            if key not in ["users", "hosts"]:
+                setattr(self, key, save_data[key])
     
     def save_room(self) -> dict:
-        save_data = {"users": self.users, "hosts": hosts}
+        save_data = {"users": list(self.users), "hosts": list(self.hosts)}
+        self.save_data = save_data
         return save_data
     
     async def broadcast(self, message: dict) -> None:
@@ -78,7 +80,7 @@ class Room():
             await self.send_hosts_update(removed_user=user)
 
     async def send_users_update(self) -> None:
-        await self.broadcast({"type": "users_update", "users": list(self.users)})
+        await self.broadcast({"type": "users_update", "users": {username: {"host": self.users[username].host} for username in self.users}})
 
     async def send_hosts_update(self, added_user=None, removed_user=None):
         if added_user is not None:
