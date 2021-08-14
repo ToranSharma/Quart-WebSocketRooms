@@ -18,9 +18,9 @@ class WebSocketRooms(Quart):
         host_matching: Optional[bool] = False,
         subdomain_matching: bool = False,
         template_folder: Optional[str] = "templates",
-        root_path: Optional[str] = None,
         instance_path: Optional[str] = None,
         instance_relative_config: bool = False,
+        root_path: Optional[str] = None,
         #################################
         # Extra arguments for rooms app #
         #################################
@@ -40,9 +40,9 @@ class WebSocketRooms(Quart):
             host_matching,
             subdomain_matching,
             template_folder,
-            root_path,
             instance_path,
-            instance_relative_config
+            instance_relative_config,
+            root_path
         )
 
         self.Room = CustomRoomClass
