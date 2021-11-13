@@ -127,13 +127,31 @@ class WebSocketRooms(Quart):
             for process in self.custom_incoming_steps:
                 await process(user, message)
         
-    def incoming_processing_step(self, func):
-        self.custom_incoming_steps.append(func)
-        return func
+    def incoming_processing_step(self, *message_types, require_host = False):
+        def decorator(func):
+            async def wraps(user, message):
+                if (
+                    (len(message_types) == 0 or message["type"] in message_types)
+                    and (user.host or not require_host)
+                ):
+                    return await func(user, message)
+            
+            self.custom_incoming_steps.append(wraps)
+            return wraps
+        return decorator
     
-    def outgoing_processing_step(self, func):
-        self.custom_outgoing_steps.append(func)
-        return func
+    def outgoing_processing_step(self, *message_types, require_host = False):
+        def decorator(func):
+            async def wraps(user, message):
+                if (
+                    (len(message_types) == 0 or message["type"] in message_types)
+                    and (user.host or not require_host)
+                ):
+                    return await func(user, message)
+            
+            self.custom_outgoing_steps.append(wraps)
+            return wraps
+        return decorator
 
     def allocate_room(self):
         room = self.Room(list(self.rooms), self.code_length)
