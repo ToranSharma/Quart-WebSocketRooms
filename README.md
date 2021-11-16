@@ -8,10 +8,9 @@ from quart_websocketrooms import WebSocketRooms
 
 app = WebSocketRooms(__name__)
 
-@app.incoming_processing_step
+@app.incoming_processing_step("chat_message")
 async def chat_message(user, message):
-    if message["type"] == "chat_message":
-        await user.room.broadcast(message)
+    await user.room.broadcast(message)
 
 app.websocket_rooms_route("/ws")
 
