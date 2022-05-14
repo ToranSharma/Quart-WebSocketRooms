@@ -248,7 +248,8 @@ class WebSocketRooms(Quart):
 
     async def remove_host(self, user, message) -> None:
         if message["type"] == "remove_host" and user.host:
-            await user.room.remove_host(user)
+            user_to_demote = user.room.users[message["username"]]
+            await user.room.remove_host(user_to_demote)
 
     async def change_host(self, user, message) -> None:
         if message["type"] == "change_host" and user.host:
