@@ -159,7 +159,7 @@ class WebSocketRooms(Quart):
         return room
         
     async def create_room(self, user, message) -> None:
-        if message["type"] == "create_room":
+        if message["type"] == "create_room" and user.room is None:
             user.username = message["username"]
             user.host = True
             room = self.allocate_room()
@@ -172,7 +172,7 @@ class WebSocketRooms(Quart):
             await user.room.send_users_update()
 
     async def join_room(self, user, message) -> None:
-        if message["type"] == "join_room":
+        if message["type"] == "join_room" and user.room is None:
             user.username = message["username"]
             code = message["code"]
             join_response = {"type": "join_room"}
@@ -194,7 +194,7 @@ class WebSocketRooms(Quart):
                 await user.room.send_users_update()
 
     async def load_room(self, user, message) -> None:
-        if message["type"] == "load_room":
+        if message["type"] == "load_room" and user.room is None:
             user.username = message["username"]
             user.host = True
             room = self.allocate_room()
