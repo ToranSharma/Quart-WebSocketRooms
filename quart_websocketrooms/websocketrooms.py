@@ -223,7 +223,7 @@ class WebSocketRooms(Quart):
         if (
             (
                 message["type"] == "leave_room"
-                or (message["type"] == "remove_from_room" and message["username"] in user.room.users)
+                or (user.host and message["type"] == "remove_from_room" and message["username"] in user.room.users)
             )
             and user.room.code in self.rooms
         ):
